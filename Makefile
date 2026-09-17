@@ -1,8 +1,15 @@
-# SPDX-License-Identifier: GPL-2.0-only
-obj-$(CONFIG_MT7601U)	+= mt7601u.o
+obj-m += mt7601u.o
 
-mt7601u-objs	= \
-	usb.o init.o main.o mcu.o trace.o dma.o core.o eeprom.o phy.o \
-	mac.o util.o debugfs.o tx.o
+mt7601u-objs := main.o mcu.o trace.o phy.o mac.o util.o debugfs.o tx.o \
+                dma.o core.o eeprom.o init.o usb.o
 
-CFLAGS_trace.o := -I$(src)
+ccflags-y := -I$(src)
+
+KDIR := /lib/modules/$(shell uname -r)/build
+PWD := $(shell pwd)
+
+default:
+	$(MAKE) -C $(KDIR) M=$(PWD) modules
+
+clean:
+	$(MAKE) -C $(KDIR) M=$(PWD) clean

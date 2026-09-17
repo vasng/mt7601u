@@ -386,6 +386,7 @@ TRACE_EVENT(set_shared_key,
 
 #undef TRACE_INCLUDE_PATH
 #define TRACE_INCLUDE_PATH .
+/* #define TRACE_INCLUDE_PATH /root/mt7601u */
 #undef TRACE_INCLUDE_FILE
 #define TRACE_INCLUDE_FILE trace
 

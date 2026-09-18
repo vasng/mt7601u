@@ -589,7 +589,7 @@ void mt7601u_phy_recalibrate_after_assoc(struct mt7601u_dev *dev)
 	if (test_bit(MT7601U_STATE_REMOVED, &dev->state))
 		return;
 
-//	mt7601u_mcu_calibrate(dev, MCU_CAL_DPD, dev->curr_temp);
+	mt7601u_mcu_calibrate(dev, MCU_CAL_DPD, dev->curr_temp);
 
 	mt7601u_rxdc_cal(dev);
 }
@@ -1097,20 +1097,27 @@ static void mt7601u_phy_freq_cal(struct work_struct *work)
 void mt7601u_phy_con_cal_onoff(struct mt7601u_dev *dev,
 		      struct ieee80211_bss_conf *info)
 {
-    bool is_assoc = is_valid_ether_addr(info->bssid);
+	struct ieee80211_vif *vif = container_of(info, struct ieee80211_vif,
+			 bss_conf);
 
-    if (!is_assoc)
-	return;
+	if (!vif->cfg.assoc)
+	cancel_delayed_work_sync(&dev->freq_cal.work);
 
-    if (dev->freq_cal.enabled == is_assoc)
-	return;
+	/* Start/stop collecting beacon data */
+	spin_lock_bh(&dev->con_mon_lock);
+	ether_addr_copy(dev->ap_bssid, info->bssid);
+	ewma_rssi_init(&dev->avg_rssi);
+	dev->bcn_freq_off = MT_FREQ_OFFSET_INVALID;
+	spin_unlock_bh(&dev->con_mon_lock);
 
-    dev->freq_cal.enabled = is_assoc;
+	dev->freq_cal.freq = dev->ee->rf_freq_off;
+	dev->freq_cal.enabled = vif->cfg.assoc;
+	dev->freq_cal.adjusting = false;
 
-    if (is_assoc)
-	mt7601u_mcu_calibrate(dev, MCU_CAL_R, 0);
+	if (vif->cfg.assoc)
+	ieee80211_queue_delayed_work(dev->hw, &dev->freq_cal.work,
+		         MT_FREQ_CAL_INIT_DELAY);
 }
-
 
 static int mt7601u_init_cal(struct mt7601u_dev *dev)
 {

@@ -434,6 +434,7 @@ struct mt7601u_dev *mt7601u_alloc_device(struct device *pdev)
 	struct ieee80211_hw *hw;
 	struct mt7601u_dev *dev;
 
+	printk(KERN_INFO "mt7601u DEBUG: Calling ieee80211_alloc_hw\n");
 	hw = ieee80211_alloc_hw(sizeof(*dev), &mt7601u_ops);
 	if (!hw)
 		return NULL;
